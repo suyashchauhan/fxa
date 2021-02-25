@@ -29,9 +29,10 @@ describe('db, session tokens expire:', () => {
     log = mocks.mockLog();
     tokens = require(`${LIB_DIR}/tokens`)(log, { tokenLifetimes });
     const DB = proxyquire(`${LIB_DIR}/db`, {
-      './pool': function () {
+      '../pool': function () {
         return pool;
       },
+      'fxa-shared/db': { setupAuthDatabase: () => {} },
     })(
       { tokenLifetimes, tokenPruning: {}, redis: { enabled: true } },
       log,
@@ -92,9 +93,10 @@ describe('db, session tokens do not expire:', () => {
     log = mocks.mockLog();
     tokens = require(`${LIB_DIR}/tokens`)(log, { tokenLifetimes });
     const DB = proxyquire(`${LIB_DIR}/db`, {
-      './pool': function () {
+      '../pool': function () {
         return pool;
       },
+      'fxa-shared/db': { setupAuthDatabase: () => {} },
     })(
       { tokenLifetimes, tokenPruning: {}, redis: { enabled: true } },
       log,
@@ -156,10 +158,11 @@ describe('db with redis disabled:', () => {
     log = mocks.mockLog();
     tokens = require(`${LIB_DIR}/tokens`)(log, { tokenLifetimes });
     const DB = proxyquire(`${LIB_DIR}/db`, {
-      './pool': function () {
+      '../pool': function () {
         return pool;
       },
-      './redis': () => {},
+      '../redis': () => {},
+      'fxa-shared/db': { setupAuthDatabase: () => {} },
     })({ redis: {}, tokenLifetimes, tokenPruning: {} }, log, tokens, {});
     return DB.connect({}).then((result) => (db = result));
   });
@@ -167,19 +170,6 @@ describe('db with redis disabled:', () => {
   it('db.sessions succeeds without a redis instance', () => {
     results.pool = [];
     return db.sessions('fakeUid').then((result) => {
-      assert.equal(pool.get.callCount, 1);
-      const args = pool.get.args[0];
-      assert.equal(args.length, 2);
-      assert.equal(typeof args[0].render, 'function');
-      assert.equal(args[0].constructor.name, 'SafeUrl');
-      assert.deepEqual(args[1], { uid: 'fakeUid' });
-      assert.deepEqual(result, []);
-    });
-  });
-
-  it('db.devices succeeds without a redis instance', () => {
-    results.pool = [];
-    return db.devices('fakeUid').then((result) => {
       assert.equal(pool.get.callCount, 1);
       const args = pool.get.args[0];
       assert.equal(args.length, 2);
@@ -292,7 +282,7 @@ describe('redis enabled, token-pruning enabled:', () => {
     maxAge: 1000 * 60 * 60 * 24 * 72,
   };
 
-  let pool, redis, log, tokens, db;
+  let pool, redis, log, tokens, db, shared;
 
   beforeEach(() => {
     pool = {
@@ -309,13 +299,20 @@ describe('redis enabled, token-pruning enabled:', () => {
       pruneSessionTokens: sinon.spy(() => P.resolve()),
       touchSessionToken: sinon.spy(() => P.resolve()),
     };
+    shared = {
+      Device: {
+        findByUid: sinon.spy(() => P.resolve([])),
+      },
+      sessionTokenData: sinon.spy(() => P.resolve()),
+      Email: () => {},
+    };
     log = mocks.mockLog();
     tokens = require(`${LIB_DIR}/tokens`)(log, { tokenLifetimes });
     const DB = proxyquire(`${LIB_DIR}/db`, {
-      './pool': function () {
+      '../pool': function () {
         return pool;
       },
-      './redis': (...args) => {
+      '../redis': (...args) => {
         assert.equal(args.length, 2, 'redisPool was passed two arguments');
         assert.equal(args[0].foo, 'bar', 'redisPool was passed config');
         assert.equal(
@@ -336,6 +333,9 @@ describe('redis enabled, token-pruning enabled:', () => {
         assert.equal(args[1], log, 'redisPool was passed log');
         return redis;
       },
+      'fxa-shared': { normalizeEmail: (x) => x },
+      'fxa-shared/db': { setupAuthDatabase: () => {} },
+      'fxa-shared/db/models/auth': shared,
     })(
       {
         tokenLifetimes,
@@ -382,7 +382,7 @@ describe('redis enabled, token-pruning enabled:', () => {
 
   it('should call redis and the db in db.devices if uid is not falsey', () => {
     return db.devices('wibble').then(() => {
-      assert.equal(pool.get.callCount, 1);
+      assert.equal(shared.Device.findByUid.callCount, 1);
       assert.equal(redis.getSessionTokens.callCount, 1);
       assert.equal(redis.getSessionTokens.args[0].length, 1);
       assert.equal(redis.getSessionTokens.args[0][0], 'wibble');
@@ -561,10 +561,10 @@ describe('redis enabled, token-pruning disabled:', () => {
     log = mocks.mockLog();
     tokens = require(`${LIB_DIR}/tokens`)(log, { tokenLifetimes });
     const DB = proxyquire(`${LIB_DIR}/db`, {
-      './pool': function () {
+      '../pool': function () {
         return pool;
       },
-      './redis': (...args) => {
+      '../redis': (...args) => {
         assert.equal(args.length, 2, 'redisPool was passed two arguments');
         assert.equal(args[0].foo, 'bar', 'redisPool was passed config');
         assert.equal(
@@ -585,6 +585,7 @@ describe('redis enabled, token-pruning disabled:', () => {
         assert.equal(args[1], log, 'redisPool was passed log');
         return redis;
       },
+      'fxa-shared/db': { setupAuthDatabase: () => {} },
     })(
       {
         tokenLifetimes,

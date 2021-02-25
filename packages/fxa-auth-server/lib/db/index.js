@@ -4,14 +4,21 @@
 
 'use strict';
 
-const error = require('./error');
-const Pool = require('./pool');
-const random = require('./crypto/random');
+const error = require('../error');
+const Pool = require('../pool');
+const random = require('../crypto/random');
 const { normalizeEmail } = require('fxa-shared').email.helpers;
+const { setupAuthDatabase } = require('fxa-shared/db');
+const {
+  Account,
+  Device,
+  Email,
+  sessionTokenData,
+} = require('fxa-shared/db/models/auth');
 
 module.exports = (config, log, Token, UnblockCode = null) => {
-  const features = require('./features')(config);
-  const SafeUrl = require('./safe-url')(log);
+  const features = require('../features')(config);
+  const SafeUrl = require('../safe-url')(log);
   const {
     SessionToken,
     KeyFetchToken,
@@ -53,14 +60,22 @@ module.exports = (config, log, Token, UnblockCode = null) => {
     this.pool = new Pool(options.url, pooleeOptions);
     this.redis =
       options.redis ||
-      require('./redis')(
+      require('../redis')(
         { ...config.redis, ...config.redis.sessionTokens },
         log
       );
   }
 
-  DB.connect = async function (options) {
-    return new DB(options);
+  DB.connect = async function (config, redis) {
+    // Establish database connection and bind instance to Model using Knex
+    const knex = setupAuthDatabase(config.database?.mysql?.auth);
+    if (['debug', 'verbose', 'trace'].includes(config.log?.level)) {
+      knex.on('query', (data) => {
+        console.dir(data);
+      });
+    }
+    const options = config.db?.backend ? config[config.db.backend] : {};
+    return new DB({ ...options, redis });
   };
 
   DB.prototype.close = async function () {
@@ -452,23 +467,15 @@ module.exports = (config, log, Token, UnblockCode = null) => {
     }
   };
 
-  SAFE_URLS.account = new SafeUrl('/account/:uid', 'db.account');
   DB.prototype.account = async function (uid) {
     log.trace('DB.account', { uid });
-    let body;
-    try {
-      body = await this.pool.get(SAFE_URLS.account, { uid });
-    } catch (err) {
-      if (isNotFoundError(err)) {
-        throw error.unknownAccount();
-      }
-      throw err;
+    const account = await Account.findByUid(uid, { include: ['emails'] });
+    if (!account) {
+      throw error.unknownAccount();
     }
-    body.emailVerified = !!body.emailVerified;
-    return setAccountEmails.call(this, body);
+    return account;
   };
 
-  SAFE_URLS.devices = new SafeUrl('/account/:uid/devices', 'db.devices');
   DB.prototype.devices = async function (uid) {
     log.trace('DB.devices', { uid });
 
@@ -476,7 +483,7 @@ module.exports = (config, log, Token, UnblockCode = null) => {
       throw error.unknownAccount();
     }
 
-    const promises = [this.pool.get(SAFE_URLS.devices, { uid })];
+    const promises = [Device.findByUid(uid)];
 
     if (this.redis) {
       promises.push(this.redis.getSessionTokens(uid));
@@ -502,14 +509,11 @@ module.exports = (config, log, Token, UnblockCode = null) => {
     }
   };
 
-  SAFE_URLS.sessionToken = new SafeUrl('/sessionToken/:id', 'db.sessionToken');
   DB.prototype.sessionToken = async function (id) {
     log.trace('DB.sessionToken', { id });
-    let data;
-    try {
-      data = await this.pool.get(SAFE_URLS.sessionToken, { id });
-    } catch (err) {
-      throw wrapTokenNotFoundError(err);
+    const data = await sessionTokenData(id);
+    if (!data) {
+      throw error.invalidToken('The authentication token could not be found');
     }
     return SessionToken.fromHex(data.tokenData, data);
   };
@@ -1121,14 +1125,9 @@ module.exports = (config, log, Token, UnblockCode = null) => {
     });
   };
 
-  SAFE_URLS.accountEmails = new SafeUrl(
-    '/account/:uid/emails',
-    'db.accountEmails'
-  );
   DB.prototype.accountEmails = async function (uid) {
     log.trace('DB.accountEmails', { uid });
-
-    return this.pool.get(SAFE_URLS.accountEmails, { uid });
+    return await Email.findByUid(uid);
   };
 
   SAFE_URLS.getSecondaryEmail = new SafeUrl(

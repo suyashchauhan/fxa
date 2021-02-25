@@ -1,16 +1,14 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-import { uuidTransformer } from '../../transformers';
-import { Account } from './account';
+import { uuidTransformer, aggregateNameValuePairs } from '../../transformers';
+import { Account, AccountOptions } from './account';
 import { AccountCustomers } from './account-customers';
 import { AuthBaseModel } from './auth-base';
+import { Device } from './device';
+import { Email } from './email';
 import { SessionToken } from './session-token';
 import { PayPalBillingAgreements } from './paypal-ba';
-
-export type AccountOptions = {
-  include?: 'emails'[];
-};
 
 export type PayPalBillingAgreementStatusType =
   | 'Pending'
@@ -46,25 +44,6 @@ export async function accountExists(uid: string) {
   }
   const account = await Account.query().findOne({ uid: uidBuffer });
   return account ? true : false;
-}
-
-export function accountByUid(uid: string, options?: AccountOptions) {
-  let uidBuffer;
-  try {
-    uidBuffer = uuidTransformer.to(uid);
-  } catch (err) {
-    return;
-  }
-
-  let query = Account.query();
-  if (options?.include?.includes('emails')) {
-    query = query
-      .withGraphJoined('emails')
-      .where({ 'accounts.uid': uidBuffer });
-  } else {
-    query = query.where({ uid: uidBuffer });
-  }
-  return query.first();
 }
 
 export async function createAccountCustomer(
@@ -223,4 +202,12 @@ export function batchAccountUpdate(uids: Buffer[], updateFields: Accountish) {
   return Account.query().whereIn('uid', uids).update(updateFields);
 }
 
-export { Account, AccountCustomers, AuthBaseModel, PayPalBillingAgreements };
+export {
+  Account,
+  AccountOptions,
+  AccountCustomers,
+  AuthBaseModel,
+  Device,
+  Email,
+  PayPalBillingAgreements,
+};

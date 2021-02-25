@@ -18204,10 +18204,10 @@ fsevents@^1.2.7:
     graphql-tools: ^7.0.1
     helmet: ^4.4.1
     jest: 26.6.3
-    knex: ^0.21.16
+    knex: ^0.21.18
     mozlog: ^3.0.1
     mysql: ^2.18.1
-    objection: ^2.2.7
+    objection: ^2.2.14
     pm2: ^4.4.1
     prettier: ^2.0.5
     proxyquire: ^2.1.3
@@ -18801,11 +18801,11 @@ fsevents@^1.2.7:
     helmet: ^4.4.1
     ioredis: ^4.19.4
     jest: 26.6.3
-    knex: ^0.21.16
+    knex: ^0.21.18
     mozlog: ^3.0.1
     mysql: ^2.18.1
     nock: ^13.0.7
-    objection: ^2.2.7
+    objection: ^2.2.14
     passport: ^0.4.1
     passport-http-bearer: ^1.0.1
     pm2: ^4.4.1
@@ -19231,7 +19231,7 @@ fsevents@^1.2.7:
     js-md5: ^0.7.3
     jsdom: 16.4.0
     jsdom-global: 3.0.2
-    knex: ^0.21.16
+    knex: ^0.21.18
     lodash.omitby: ^4.6.0
     lodash.pick: ^4.4.0
     mocha: ^7.1.2
@@ -19240,7 +19240,7 @@ fsevents@^1.2.7:
     mysql: ^2.18.1
     node-uap: "git://github.com/mozilla-fxa/node-uap.git#96dc1f9f224422ec184395b6408cd1fc40ee452a"
     nyc: ^15.0.1
-    objection: ^2.2.7
+    objection: ^2.2.14
     pm2: ^4.4.1
     prettier: ^2.0.5
     proxyquire: ^2.1.3
@@ -24805,9 +24805,9 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"knex@npm:^0.21.16":
-  version: 0.21.16
-  resolution: "knex@npm:0.21.16"
+"knex@npm:^0.21.18":
+  version: 0.21.18
+  resolution: "knex@npm:0.21.18"
   dependencies:
     colorette: 1.2.1
     commander: ^6.2.0
@@ -24840,7 +24840,7 @@ fsevents@^1.2.7:
       optional: true
   bin:
     knex: bin/cli.js
-  checksum: 6ef4dd4934caf23f8a563d063c6f051f3087c019faa01ad5d3ad843c9744d2520d181a21984ce67bd5b4f5f38bf43d757390512aaa76c12dc58bf6fdec9b5234
+  checksum: a23df2ee4a8f123f4efa99ad42bff2ceb46ded0e061b73eb113846bcd3b4d4861dfd328c9b9d1261c0922b93cf43ae478c25be3923583bcb06e9cc23719d5cf0
   languageName: node
   linkType: hard
 
@@ -28066,15 +28066,15 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"objection@npm:^2.2.7":
-  version: 2.2.7
-  resolution: "objection@npm:2.2.7"
+"objection@npm:^2.2.14":
+  version: 2.2.14
+  resolution: "objection@npm:2.2.14"
   dependencies:
     ajv: ^6.12.6
     db-errors: ^0.2.3
   peerDependencies:
     knex: 0.x
-  checksum: 02419cbf519d9c34c2553a80966529b61471b270cd303f82af9794dd66cd7240af67a5b39332f4285bf2de0456949407fbbf48dacbcf04804dd61f67667d1e64
+  checksum: 8a48f43515827b61bbdaa6644ec03b8d3aa58d94c2312e0165ab5abe63f16c8917f5a58d52701aa3c6096405f4535306c164b6d1e0d38d2be1f00498b6c0b6f2
   languageName: node
   linkType: hard
 

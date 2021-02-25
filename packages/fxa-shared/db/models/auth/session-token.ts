@@ -34,6 +34,8 @@ export class SessionToken {
   static fromDatabaseRow(row: any): SessionToken {
     row.uid = uuidTransformer.from(row.uid);
     row.emailCode = uuidTransformer.from(row.emailCode);
+    row.tokenData = uuidTransformer.from(row.tokenData);
+    row.tokenVerificationId = uuidTransformer.from(row.tokenVerificationId);
     return new SessionToken(row);
   }
 }
