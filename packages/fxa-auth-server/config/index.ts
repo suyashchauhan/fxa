@@ -862,6 +862,7 @@ const conf = convict({
     format: Object,
     default: {
       USD: ['US', 'GB', 'NZ', 'MY', 'SG', 'CA', 'AS', 'GU', 'MP', 'PR', 'VI'],
+      EUR: ['FR', 'DE', 'AU'],
     },
     env: 'CURRENCIES',
   },

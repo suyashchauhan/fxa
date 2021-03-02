@@ -1,3 +1,6 @@
+import { StripeError } from '@stripe/stripe-js';
+import { parse } from 'path';
+
 // ref: fxa-auth-server/lib/error.js
 const AuthServerErrno = {
   UNKNOWN_SUBSCRIPTION_CUSTOMER: 176,
@@ -6,6 +9,7 @@ const AuthServerErrno = {
   REJECTED_SUBSCRIPTION_PAYMENT_TOKEN: 179,
   SUBSCRIPTION_ALREADY_CANCELLED: 180,
   REJECTED_CUSTOMER_UPDATE: 181,
+  UNKNOWN_REGION: 130,
 };
 
 /*
@@ -29,6 +33,9 @@ let errorMessageIndex: { [key: string]: string } = {
   duplicate_transaction: 'duplicate-transaction-error',
   coupon_expired: 'coupon-expired-error',
   card_error: 'card-error',
+  // Currency
+  currency_switching_not_allowed: 'currency-switching-not-allowed',
+  currency_country_mismatch: 'currency-country-mismatch',
   // todo: handle "parameters_exclusive": "Your already subscribed to _product_"
 };
 
@@ -113,8 +120,24 @@ basicErrors.forEach((k) => (errorMessageIndex[k] = BASIC_ERROR));
 paymentErrors1.forEach((k) => (errorMessageIndex[k] = PAYMENT_ERROR_1));
 paymentErrors2.forEach((k) => (errorMessageIndex[k] = PAYMENT_ERROR_2));
 
-function getErrorMessage(type: string) {
-  return errorMessageIndex[type] ? errorMessageIndex[type] : BASIC_ERROR;
+function getErrorMessage(err: any) {
+  let code = err.code ? err.code : 'UNKNOWN';
+  // Case for currency mismatch errors
+  if (parseInt(code) === 400 && parseInt(err.errno) === 130) {
+    if (
+      err.message === 'Funding source country does not match plan currency.'
+    ) {
+      code = 'currency_country_mismatch';
+    }
+    // TODO - Do we hit this error on this path?
+    if (
+      err.message.contains('Change from') &&
+      err.message.contains('is not permitted.')
+    ) {
+      code = 'currency_switching_not_allowed';
+    }
+  }
+  return errorMessageIndex[code] ? errorMessageIndex[code] : BASIC_ERROR;
 }
 
 // BASIC_ERROR and PAYMENT_ERROR_1 are exported for errors.test.tsx

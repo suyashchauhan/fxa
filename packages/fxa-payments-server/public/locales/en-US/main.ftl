@@ -21,6 +21,8 @@ general-error-heading = General application error
 basic-error-message = Something went wrong. Please try again later.
 payment-error-1 = Hmm. There was a problem authorizing your payment. Try again or get in touch with your card issuer.
 payment-error-2 = Hmm. There was a problem authorizing your payment. Get in touch with your card issuer.
+currency-country-mismatch = The currency of this subscription is not valid for the country associated with your payment.
+currency-switching-not-allowed = Sorry, you can't switch between currencies.
 
 expired-card-error = It looks like your credit card has expired. Try another card.
 insufficient-funds-error = It looks like your card has insufficient funds. Try another card.

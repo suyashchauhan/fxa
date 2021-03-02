@@ -167,6 +167,15 @@ function init() {
         }}
       />
     ))
+    .add('currency country mismatch', () => (
+      <Subject
+        paymentErrorInitialState={{
+          type: 'card_error',
+          code: 'currency_country_mismatch',
+          message: 'NOPE.',
+        }}
+      />
+    ))
     .add('other error', () => (
       <Subject
         paymentErrorInitialState={{
