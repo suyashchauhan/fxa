@@ -6,12 +6,22 @@ import { Model } from 'objection';
 
 import { intBoolTransformer, uuidTransformer } from '../transformers';
 
+function callString(name: string, argCount: number) {
+  const qs = new Array(argCount).fill('?').join(',');
+  return `Call ${name}(${qs})`;
+}
 /**
  * Base Model for helpers that should be present on all models.
  */
-export class BaseModel extends Model {
+export abstract class BaseModel extends Model {
   protected $uuidFields: string[] = [];
   protected $intBoolFields: string[] = [];
+
+  static async callProcedure(name: string, args: any[] = []) {
+    const knex = this.knex();
+    const [result] = await knex.raw(callString(name, args.length), args);
+    return result[0] as any[];
+  }
 
   public $parseDatabaseJson(json: any) {
     json = super.$parseDatabaseJson(json);

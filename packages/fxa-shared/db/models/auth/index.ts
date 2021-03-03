@@ -4,10 +4,16 @@
 import { uuidTransformer, aggregateNameValuePairs } from '../../transformers';
 import { Account, AccountOptions } from './account';
 import { AccountCustomers } from './account-customers';
+import { AccountResetToken } from './account-reset-token';
 import { AuthBaseModel } from './auth-base';
 import { Device } from './device';
 import { Email } from './email';
+import { KeyFetchToken } from './key-fetch-token';
+import { PasswordChangeToken } from './password-change-token';
+import { PasswordForgotToken } from './password-forgot-token';
+import { RecoveryKey } from './recovery-key';
 import { SessionToken } from './session-token';
+import { TotpToken } from './totp-token';
 import { PayPalBillingAgreements } from './paypal-ba';
 
 export type PayPalBillingAgreementStatusType =
@@ -16,24 +22,6 @@ export type PayPalBillingAgreementStatusType =
   | 'Suspended'
   | 'Cancelled'
   | 'Expired';
-
-export async function sessionTokenData(
-  tokenId: string
-): Promise<SessionToken | undefined> {
-  let tokenBuffer: Buffer;
-  try {
-    tokenBuffer = uuidTransformer.to(tokenId);
-  } catch (err) {
-    return;
-  }
-  const knex = Account.knex();
-  const [result] = await knex.raw('Call sessionWithDevice_18(?)', tokenBuffer);
-  const rowPacket = result.shift();
-  if (rowPacket.length === 0) {
-    return;
-  }
-  return SessionToken.fromDatabaseRow(rowPacket[0]);
-}
 
 export async function accountExists(uid: string) {
   let uidBuffer;
@@ -206,8 +194,15 @@ export {
   Account,
   AccountOptions,
   AccountCustomers,
+  AccountResetToken,
   AuthBaseModel,
   Device,
   Email,
+  KeyFetchToken,
+  PasswordChangeToken,
+  PasswordForgotToken,
   PayPalBillingAgreements,
+  RecoveryKey,
+  SessionToken,
+  TotpToken,
 };
